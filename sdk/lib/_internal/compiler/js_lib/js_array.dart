@@ -12,6 +12,10 @@ part of _interceptors;
  */
 class JSArray<E> extends Interceptor implements List<E>, JSIndexable {
 
+  int get customTag => Primitives.objectHashCode(this);
+
+  void setCustomTag(int tag) {}  
+
   const JSArray();
 
   /**
