@@ -55,6 +55,20 @@ DEFINE_NATIVE_ENTRY(Object_setHash, 2) {
   return Object::null();
 }
 
+DEFINE_NATIVE_ENTRY(Object_getCustomTag, 1) {
+  const Instance& instance = Instance::CheckedHandle(arguments->NativeArgAt(0));
+  Heap* heap = isolate->heap();
+  return Smi::New(heap->GetCustomTag(instance.raw()));
+}
+
+
+DEFINE_NATIVE_ENTRY(Object_setCustomTag, 2) {
+  const Instance& instance = Instance::CheckedHandle(arguments->NativeArgAt(0));
+  GET_NON_NULL_NATIVE_ARGUMENT(Smi, customTag, arguments->NativeArgAt(1));
+  Heap* heap = isolate->heap();
+  heap->SetCustomTag(instance.raw(), customTag.Value());
+  return Object::null();
+}
 
 DEFINE_NATIVE_ENTRY(Object_toString, 1) {
   const Instance& instance = Instance::CheckedHandle(arguments->NativeArgAt(0));
