@@ -11,6 +11,11 @@ part of _interceptors;
  * argument added to each member.
  */
 class JSString extends Interceptor implements String, JSIndexable {
+
+  int get customTag => Primitives.objectHashCode(this);
+
+  void setCustomTag(int tag) {}  
+
   const JSString();
 
   int codeUnitAt(int index) {
