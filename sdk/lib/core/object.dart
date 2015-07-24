@@ -96,6 +96,6 @@ class Object {
 
   external int get customTag;
 
-  external void set customTag(tag);
+  external set customTag(int tag);
 
 }

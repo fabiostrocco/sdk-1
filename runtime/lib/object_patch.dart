@@ -21,7 +21,7 @@ patch class Object {
   /* patch */ int get hashCode => _identityHashCode;
   
   /* patch */ int get customTag => _getCustomTag(this);
-  /* patch */ void set customTag(tag) => _setCustomTag(this, tag);
+  /* patch */ set customTag(int tag) => _setCustomTag(this, tag);
 
   int get _identityHashCode {
     var result = _getHash(this);

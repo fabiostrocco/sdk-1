@@ -41,12 +41,6 @@ class Object {
   int get hashCode => Primitives.objectHashCode(this);
 
   @patch
-  int get customTag => throw new Exception("Not supported on dart2js");
-
-  @patch
-  void set customTag(tag) => throw new Exception("Not supported on dart2js");  
-
-  @patch
   String toString() => Primitives.objectToHumanReadableString(this);
 
   @patch
@@ -60,6 +54,12 @@ class Object {
 
   @patch
   Type get runtimeType => getRuntimeType(this);
+
+  @patch
+  int get customTag => Primitives.objectHashCode(this);
+
+  @patch
+  set customTag(int tag) {}  
 }
 
 // Patch for Function implementation.
