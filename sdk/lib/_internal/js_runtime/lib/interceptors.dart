@@ -317,6 +317,10 @@ abstract class Interceptor {
   }
 
   Type get runtimeType => getRuntimeType(this);
+
+  int get customTag => Primitives.objectHashCode(this);
+
+  void setCustomTag(int tag) {}  
 }
 
 /**
