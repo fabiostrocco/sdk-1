@@ -3,6 +3,10 @@
 // BSD-style license that can be found in the LICENSE file.
 
 patch class Function {
+  static _getReceiver(obj) native "Function_getReceiver";
+
+  /* patch */ static dynamic receiver(Function function) => _getReceiver(function);
+
   static _apply(List arguments, List names)
       native "Function_apply";
 

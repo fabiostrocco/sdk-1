@@ -13,6 +13,19 @@
 
 namespace dart {
 
+DEFINE_NATIVE_ENTRY(Function_getReceiver, 1) {
+  const Instance& instance = Instance::CheckedHandle(arguments->NativeArgAt(0));
+  if (instance.IsClosure()) {
+    const Function& function = Function::Handle(Closure::function(instance));
+    if (function.IsImplicitInstanceClosureFunction()) {
+      const Context& context = Context::Handle(Closure::context(instance));
+      const Object& receiver = Object::Handle(context.At(0));
+      return receiver.raw();
+    }
+  }
+  return Object::null();
+}
+
 DEFINE_NATIVE_ENTRY(Function_apply, 2) {
   const Array& fun_arguments = Array::CheckedHandle(arguments->NativeArgAt(0));
   const Array& fun_arg_names = Array::CheckedHandle(arguments->NativeArgAt(1));

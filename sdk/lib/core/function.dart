@@ -11,6 +11,8 @@ part of dart.core;
  * subtype of a function type, and as such, a subtype of [Function].
  */
 abstract class Function {
+  external static receiver(Function function);
+
   /**
    * Dynamically call [function] with the specified arguments.
    *
