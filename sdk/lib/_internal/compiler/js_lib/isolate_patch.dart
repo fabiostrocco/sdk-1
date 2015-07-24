@@ -60,7 +60,7 @@ class Isolate {
   }
 
   @patch
-  void _pause(Capability resumeCapability) {
+  void _pause(Capability resumeCapability) { print("PAUSED");
     var message = new List(3)
         ..[0] = "pause"
         ..[1] = pauseCapability

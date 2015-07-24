@@ -4,6 +4,92 @@
 
 part of dart.collection;
 
+class AugmentedTypeChecker {
+
+  static bool first = true;
+  static int totalTypeChecks = 0;
+  static int failingTypeChecks = 0;
+  
+  static void checkList(dynamic receiver, dynamic z) {
+
+    if(first) {
+      first = false;
+      print("AUTC: Augmented Type Checker is running");
+    }
+    
+    int i = 0;
+    totalTypeChecks++;
+
+    if(totalTypeChecks %~ 10 == 0) {
+      print("AUTC: Augmented Type Checker is working ($totalTypeChecks)");
+    }
+
+    for(var el in receiver) {
+      i++;
+      if(!z.isT(el)) {
+        failingTypeChecks++;
+        print("AUTC: Augmented Type Checker Error");
+        print("AUTC: Expected unboxed of ${z.runtimeType}, having ${el.runtimeType},\n failing: ${failingTypeChecks} total: ${totalTypeChecks}");        
+      }
+    }
+  }
+
+
+  static void checkSet(dynamic receiver, dynamic z) {
+    checkList(receiver, z);
+  }
+
+
+  static void checkIterable(dynamic receiver, dynamic z) {
+    checkList(receiver, z);
+  }
+
+  static void checkMap(dynamic receiver, dynamic kT, dynamic vT) {
+    int i = 0;
+    totalTypeChecks++;
+
+    if(first) {
+      first = false;
+      print("AUTC: Augmented Type Checker is running");
+    }
+
+    if(totalTypeChecks %~ 10 == 0) {
+      print("AUTC: Augmented Type Checker is working ($totalTypeChecks)");
+    }
+
+    receiver.forEach((k, v) {
+      i++;
+      if(!kT.isT(k) || !vT.isT(v)) {
+        failingTypeChecks++;
+        print("AUTC: Augmented Type Checker Error");
+        print("AUTC: Expected unboxed of ${kT.runtimeType}, having ${k.runtimeType},\n failing: ${failingTypeChecks} total: ${totalTypeChecks}");        
+        print("AUTC: Expected unboxed of ${vT.runtimeType}, having ${v.runtimeType},\n failing: ${failingTypeChecks} total: ${totalTypeChecks}");        
+      }
+    });
+  }
+
+  static void onExit() {
+    print("Exit from inside the VM");
+  }
+}
+
+
+class  TypeBoxx<T> {
+  bool isT(x) {
+    var response = identical(x, null) || x is T;
+    // try {
+    //   print("Checking if $x : ${x.runtimeType} is $T ${T.runtimeType} : ${response}");
+    // }
+    // catch(e) {
+    //   print("Checking if ${x.runtimeType} is $T : ${response}");
+    // }
+    return response;
+  }
+
+}
+
+
+
 /**
  * Abstract implementation of a list.
  *
@@ -30,6 +116,7 @@ abstract class ListBase<E> extends Object with ListMixin<E> {
    */
   static String listToString(List list) =>
       IterableBase.iterableToFullString(list, '[', ']');
+
 }
 
 /**

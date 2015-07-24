@@ -40,7 +40,6 @@ class Object {
   @patch
   int get hashCode => Primitives.objectHashCode(this);
 
-
   @patch
   String toString() => Primitives.objectToHumanReadableString(this);
 
@@ -55,6 +54,12 @@ class Object {
 
   @patch
   Type get runtimeType => getRuntimeType(this);
+
+  @patch
+  int get customTag => Primitives.objectHashCode(this);
+
+  @patch
+  void setCustomTag(int customTag) {}  
 }
 
 // Patch for Function implementation.

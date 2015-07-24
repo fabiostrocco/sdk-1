@@ -64,13 +64,15 @@ DEFINE_FLAG(bool, throw_on_javascript_int_overflow, false,
 DEFINE_FLAG(bool, use_field_guards, true, "Guard field cids.");
 DEFINE_FLAG(bool, use_lib_cache, true, "Use library name cache");
 DEFINE_FLAG(bool, trace_field_guards, false, "Trace changes in field's cids.");
-
+DEFINE_FLAG(bool, augment_type_check, false, "Augmented type checker");
+  
 DECLARE_FLAG(bool, trace_compiler);
 DECLARE_FLAG(bool, trace_deoptimization);
 DECLARE_FLAG(bool, trace_deoptimization_verbose);
 DECLARE_FLAG(bool, show_invisible_frames);
 DECLARE_FLAG(charp, coverage_dir);
 DECLARE_FLAG(bool, write_protect_code);
+
 
 static const char* kGetterPrefix = "get:";
 static const intptr_t kGetterPrefixLength = strlen(kGetterPrefix);
@@ -3606,9 +3608,11 @@ bool Class::TypeTestNonRecursive(const Class& cls,
                                  const Class& other,
                                  const TypeArguments& other_type_arguments,
                                  Error* bound_error) {
+
+  Isolate* isolate = Isolate::Current();
+  
   // Use the thsi object as if it was the receiver of this method, but instead
   // of recursing reset it to the super class and loop.
-  Isolate* isolate = Isolate::Current();
   Class& thsi = Class::Handle(isolate, cls.raw());
   while (true) {
     ASSERT(!thsi.IsVoidClass());
@@ -13916,11 +13920,17 @@ void Instance::SetTypeArguments(const TypeArguments& value) const {
   ASSERT(field_offset != Class::kNoTypeArguments);
   SetFieldAtOffset(field_offset, value);
 }
+  
+  
+  
+  
+  
 
-
+bool augment_disabled = false;
 bool Instance::IsInstanceOf(const AbstractType& other,
                             const TypeArguments& other_instantiator,
                             Error* bound_error) const {
+  
   ASSERT(other.IsFinalized());
   ASSERT(!other.IsDynamicType());
   ASSERT(!other.IsMalformed());
@@ -13962,6 +13972,151 @@ bool Instance::IsInstanceOf(const AbstractType& other,
     other_class = other.type_class();
     other_type_arguments = other.arguments();
   }
+  
+  if (FLAG_augment_type_check  && !augment_disabled) {
+    augment_disabled = true;
+    
+    if(!cls.IsDynamicClass() && !cls.IsObjectClass() && !cls.IsFunction() && !other_type_arguments.IsNull()) {
+      
+      const Library& libCore = Library::Handle(Library::LookupLibrary(String::Handle(String::New("dart:core"))));
+      const Library& libCollection = Library::Handle(Library::LookupLibrary(String::Handle(String::New("dart:collection"))));
+      const Class& listClass = Class::Handle(libCore.LookupClass(String::Handle(String::New("List"))));
+      const Class& mapClass = Class::Handle(libCore.LookupClass(String::Handle(String::New("Map"))));
+      const Class& iterableClass = Class::Handle(libCore.LookupClass(String::Handle(String::New("Iterable"))));
+      const Class& setClass = Class::Handle(libCore.LookupClass(String::Handle(String::New("Set"))));
+
+
+      Error& bound_error = Error::Handle(Error::null());
+
+      bool listInstance = this->IsInstanceOf(AbstractType::Handle(listClass.DeclarationType()), TypeArguments::Handle(AbstractType::Handle(listClass.DeclarationType()).arguments()), &bound_error);
+      bool mapInstance =  this->IsInstanceOf(AbstractType::Handle(mapClass.DeclarationType()), TypeArguments::Handle(AbstractType::Handle(mapClass.DeclarationType()).arguments()), &bound_error);
+      bool setInstance = this->IsInstanceOf(AbstractType::Handle(setClass.DeclarationType()), TypeArguments::Handle(AbstractType::Handle(setClass.DeclarationType()).arguments()), &bound_error);
+      bool iterableInstance =  this->IsInstanceOf(AbstractType::Handle(iterableClass.DeclarationType()), TypeArguments::Handle(AbstractType::Handle(iterableClass.DeclarationType()).arguments()), &bound_error);
+
+      if(listInstance || mapInstance || setInstance || iterableInstance) {
+
+        const String& name = String::Handle(String::New("TypeBoxx"));
+        const Class& boxclass = Class::Handle(libCollection.LookupClass(name));
+        
+        const String& checkerName = String::Handle(String::New("AugmentedTypeChecker"));
+        const Class& checkerClass = Class::Handle(libCollection.LookupClass(checkerName));
+        
+        Object *tmpResult = NULL;
+        if(listInstance) {
+          const Function& checkFunction = Function::Handle(checkerClass.LookupStaticFunction(String::Handle(String::New("checkList"))));
+          Instance& boxi = Instance::Handle(Instance::New(boxclass));
+          TypeArguments& element_type = TypeArguments::Handle(TypeArguments::New(1));
+          element_type.SetTypeAt(0, AbstractType::Handle(other_type_arguments.TypeAt(0)));
+          boxi.SetTypeArguments(TypeArguments::Handle(element_type.Canonicalize()));
+          int kNumArguments = 2; // receiver, type-checker
+        
+          const Array& args = Array::Handle(Array::New(kNumArguments));
+          args.SetAt(0, *this);
+          args.SetAt(1, boxi);
+          tmpResult = &Object::Handle(DartEntry::InvokeFunction(checkFunction, args));
+        }
+        else if(mapInstance) {
+          
+          const Function& checkFunction = Function::Handle(checkerClass.LookupStaticFunction(String::Handle(String::New("checkMap"))));
+          
+          Instance& boxiK = Instance::Handle(Instance::New(boxclass));
+          TypeArguments& element_typeK = TypeArguments::Handle(TypeArguments::New(1));
+          element_typeK.SetTypeAt(0, AbstractType::Handle(other_type_arguments.TypeAt(0)));
+          boxiK.SetTypeArguments(TypeArguments::Handle(element_typeK.Canonicalize()));
+          
+          Instance& boxiV = Instance::Handle(Instance::New(boxclass));
+          TypeArguments& element_typeV = TypeArguments::Handle(TypeArguments::New(1));
+          element_typeV.SetTypeAt(0, AbstractType::Handle(other_type_arguments.TypeAt(1)));
+          boxiV.SetTypeArguments(TypeArguments::Handle(element_typeV.Canonicalize()));
+          
+          
+          int kNumArguments = 3; // receiver, type-checker-keys, type-checker-values
+          
+          const Array& args = Array::Handle(Array::New(kNumArguments));
+          args.SetAt(0, *this);
+          args.SetAt(1, boxiK);
+          args.SetAt(2, boxiV);
+          tmpResult = &Object::Handle(DartEntry::InvokeFunction(checkFunction, args));
+          
+        }
+        else if(setInstance) {
+          const Function& checkFunction = Function::Handle(checkerClass.LookupStaticFunction(String::Handle(String::New("checkSet"))));
+          Instance& boxi = Instance::Handle(Instance::New(boxclass));
+          TypeArguments& element_type = TypeArguments::Handle(TypeArguments::New(1));
+          element_type.SetTypeAt(0, AbstractType::Handle(other_type_arguments.TypeAt(0)));
+          boxi.SetTypeArguments(TypeArguments::Handle(element_type.Canonicalize()));
+          int kNumArguments = 2; // receiver, type-checker
+        
+          const Array& args = Array::Handle(Array::New(kNumArguments));
+          args.SetAt(0, *this);
+          args.SetAt(1, boxi);
+          tmpResult = &Object::Handle(DartEntry::InvokeFunction(checkFunction, args));
+        }
+        else if(iterableInstance) {
+          const Function& checkFunction = Function::Handle(checkerClass.LookupStaticFunction(String::Handle(String::New("checkIterable"))));
+          Instance& boxi = Instance::Handle(Instance::New(boxclass));
+          TypeArguments& element_type = TypeArguments::Handle(TypeArguments::New(1));
+          element_type.SetTypeAt(0, AbstractType::Handle(other_type_arguments.TypeAt(0)));
+          boxi.SetTypeArguments(TypeArguments::Handle(element_type.Canonicalize()));
+          int kNumArguments = 2; // receiver, type-checker
+        
+          const Array& args = Array::Handle(Array::New(kNumArguments));
+          args.SetAt(0, *this);
+          args.SetAt(1, boxi);
+          tmpResult = &Object::Handle(DartEntry::InvokeFunction(checkFunction, args));
+        }
+
+        Object& result = *tmpResult;
+        if(result.IsError()) {
+          OS::PrintErr("AUTC: Error during dart function invocation!! : %s\n", String::Handle(Class::Handle(result.clazz()).Name()).ToCString());
+
+          if (result.IsError()) {
+            Isolate * I = Isolate::Current();
+
+            
+            
+            String& exc_str = String::Handle(I);
+            String& stacktrace_str = String::Handle(I);
+            if (result.IsUnhandledException()) {
+              const UnhandledException& uhe = UnhandledException::Cast(result);
+              const Instance& exception = Instance::Handle(I, uhe.exception());
+              Object& tmp = Object::Handle(I);
+              tmp = DartLibraryCalls::ToString(exception);
+              if (!tmp.IsString()) {
+                tmp = String::New(exception.ToCString());
+              }
+              exc_str ^= tmp.raw();
+              
+              const Instance& stacktrace = Instance::Handle(I, uhe.stacktrace());
+              tmp = DartLibraryCalls::ToString(stacktrace);
+              if (!tmp.IsString()) {
+                tmp = String::New(stacktrace.ToCString());
+              }
+              stacktrace_str ^= tmp.raw();;
+            }
+            
+            OS::PrintErr("AUTC: Error message:  %s \n stacktrace: %s \n", exc_str.ToCString(), stacktrace_str.ToCString());
+
+            
+          }
+          OS::PrintErr("AUTC: Element class was %s \n",
+                       String::Handle(AbstractType::Handle(other_type_arguments.TypeAt(0)).Name()).ToCString());
+
+        }
+        else {
+//              OS::PrintErr("Success\n");
+//              OS::PrintErr("Element class was %s \n",
+//                           String::Handle(AbstractType::Handle(other_type_arguments.TypeAt(0)).Name()).ToCString());
+
+        }
+      }
+    }
+    
+    augment_disabled = false;
+    
+  }
+  
+  
   return cls.IsSubtypeOf(type_arguments, other_class, other_type_arguments,
                          bound_error);
 }

@@ -267,4 +267,5 @@ abstract class Map<K, V> {
    * Returns true if there is at least one key-value pair in the map.
    */
   bool get isNotEmpty;
+
 }

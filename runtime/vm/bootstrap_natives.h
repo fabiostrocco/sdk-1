@@ -17,6 +17,8 @@ namespace dart {
   V(Object_equals, 2)                                                          \
   V(Object_getHash, 1)                                                         \
   V(Object_setHash, 2)                                                         \
+  V(Object_getCustomTag, 1)                                                    \
+  V(Object_setCustomTag, 2)                                                    \
   V(Object_toString, 1)                                                        \
   V(Object_noSuchMethod, 6)                                                    \
   V(Object_runtimeType, 1)                                                     \

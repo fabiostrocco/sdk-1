@@ -80,6 +80,7 @@ abstract class MapMixin<K, V> implements Map<K, V> {
   bool get isNotEmpty => keys.isNotEmpty;
   Iterable<V> get values => new _MapBaseValueIterable<V>(this);
   String toString() => Maps.mapToString(this);
+
 }
 
 /**
