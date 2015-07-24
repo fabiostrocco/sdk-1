@@ -59,7 +59,7 @@ class Object {
   int get customTag => Primitives.objectHashCode(this);
 
   @patch
-  set customTag(int tag) {}  
+  void setCustomTag(int tag) {}  
 }
 
 // Patch for Function implementation.
