@@ -40,6 +40,11 @@ class Object {
   @patch
   int get hashCode => Primitives.objectHashCode(this);
 
+  @patch
+  int get customTag => throw new Exception("Not supported on dart2js");
+
+  @patch
+  void set customTag(tag) => throw new Exception("Not supported on dart2js");  
 
   @patch
   String toString() => Primitives.objectToHumanReadableString(this);

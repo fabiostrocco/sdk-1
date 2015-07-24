@@ -42,6 +42,7 @@ class Heap {
   enum WeakSelector {
     kPeers = 0,
     kHashes,
+    kCustomTags,
     kNumWeakSelectors
   };
 
@@ -193,6 +194,13 @@ class Heap {
     return GetWeakEntry(raw_obj, kHashes);
   }
   int64_t HashCount() const;
+  
+  void SetCustomTag(RawObject* raw_obj, intptr_t hash) {
+    SetWeakEntry(raw_obj, kCustomTags, hash);
+  }
+  intptr_t GetCustomTag(RawObject* raw_obj) const {
+    return GetWeakEntry(raw_obj, kCustomTags);
+  }
 
   // Used by the GC algorithms to propagate weak entries.
   intptr_t GetWeakEntry(RawObject* raw_obj, WeakSelector sel) const;

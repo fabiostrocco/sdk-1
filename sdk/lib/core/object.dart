@@ -93,4 +93,9 @@ class Object {
    * A representation of the runtime type of the object.
    */
   external Type get runtimeType;
+
+  external int get customTag;
+
+  external void set customTag(tag);
+
 }
