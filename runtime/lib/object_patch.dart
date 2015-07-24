@@ -16,6 +16,9 @@ patch class Object {
   static _setHash(obj, hash) native "Object_setHash";
 
   /* patch */ int get hashCode => _identityHashCode;
+  
+  /* patch */ int get customTag => _getCustomTag(this);
+  /* patch */ set customTag(int tag) => _setCustomTag(this, tag);
 
   int get _identityHashCode {
     var result = _getHash(this);
