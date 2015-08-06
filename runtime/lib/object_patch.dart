@@ -15,10 +15,13 @@ patch class Object {
   static _getHash(obj) native "Object_getHash";
   static _setHash(obj, hash) native "Object_setHash";
 
+  static _getCustomTag(obj) native "Object_getCustomTag";
+  static _setCustomTag(obj, customTag) native "Object_setCustomTag";
+
   /* patch */ int get hashCode => _identityHashCode;
   
   /* patch */ int get customTag => _getCustomTag(this);
-  /* patch */ void setCustomTag(int tag) => _setCustomTag(this, tag);
+  /* patch */ void setCustomTag(int customTag) => _setCustomTag(this, customTag);
 
   int get _identityHashCode {
     var result = _getHash(this);
