@@ -195,8 +195,8 @@ class Heap {
   }
   int64_t HashCount() const;
   
-  void SetCustomTag(RawObject* raw_obj, intptr_t hash) {
-    SetWeakEntry(raw_obj, kCustomTags, hash);
+  void SetCustomTag(RawObject* raw_obj, intptr_t customTag) {
+    SetWeakEntry(raw_obj, kCustomTags, customTag);
   }
   intptr_t GetCustomTag(RawObject* raw_obj) const {
     return GetWeakEntry(raw_obj, kCustomTags);
