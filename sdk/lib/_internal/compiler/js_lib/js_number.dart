@@ -17,7 +17,7 @@ class JSNumber extends Interceptor implements num {
   
   int get customTag => Primitives.objectHashCode(this);
 
-  void setCustomTag(int tag) {}  
+  void setCustomTag(int customTag) {}  
   
   const JSNumber();
 

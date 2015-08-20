@@ -14,7 +14,7 @@ class JSString extends Interceptor implements String, JSIndexable {
 
   int get customTag => Primitives.objectHashCode(this);
 
-  void setCustomTag(int tag) {}  
+  void setCustomTag(int customTag) {}  
 
   const JSString();
 
