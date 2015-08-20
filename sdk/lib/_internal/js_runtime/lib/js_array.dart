@@ -14,7 +14,7 @@ class JSArray<E> extends Interceptor implements List<E>, JSIndexable {
 
   int get customTag => Primitives.objectHashCode(this);
 
-  void setCustomTag(int tag) {}  
+  void setCustomTag(int customTag) {}  
 
   const JSArray();
 
