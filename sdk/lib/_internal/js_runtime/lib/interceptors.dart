@@ -320,7 +320,7 @@ abstract class Interceptor {
 
   int get customTag => Primitives.objectHashCode(this);
 
-  void setCustomTag(int tag) {}  
+  void setCustomTag(int customTag) {}  
 }
 
 /**
@@ -340,7 +340,7 @@ class JSBool extends Interceptor implements bool {
 
   int get customTag => Primitives.objectHashCode(this);
 
-  void setCustomTag(int tag) {}  
+  void setCustomTag(int customTag) {}  
 }
 
 /**
@@ -367,7 +367,7 @@ class JSNull extends Interceptor implements Null {
 
   int get customTag => Primitives.objectHashCode(this);
 
-  void setCustomTag(int tag) {}  
+  void setCustomTag(int customTag) {}  
 
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
@@ -413,7 +413,7 @@ abstract class JavaScriptObject extends Interceptor implements JSObject {
 
   int get customTag => Primitives.objectHashCode(this);
 
-  void setCustomTag(int tag) {}  
+  void setCustomTag(int customTag) {}  
 
   Type get runtimeType => JSObject;
 
