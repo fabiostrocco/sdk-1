@@ -13920,6 +13920,11 @@ void Instance::SetTypeArguments(const TypeArguments& value) const {
   ASSERT(field_offset != Class::kNoTypeArguments);
   SetFieldAtOffset(field_offset, value);
 }
+  
+  
+  
+  
+  
 
 bool augment_disabled = false;
 bool Instance::IsInstanceOf(const AbstractType& other,
@@ -13979,9 +13984,11 @@ bool Instance::IsInstanceOf(const AbstractType& other,
       Class *cur = &Class::Handle(cls.raw());
       
       while(!cur->IsNull()) {
-        
-        if(String::Handle(cur->Name()).Equals("ListBase")) {
 
+        /*
+          This is not working for maps right now, because MapBase is not the base class for all the maps.
+         */
+        if(String::Handle(cur->Name()).Equals("ListBase") || String::Handle(cur->Name()).Equals("MapBase")) {
 
           RawFunction *it = cur->LookupFunction(String::Handle(String::New("checkMePlease")));
           Function& fun = Function::Handle(it);
@@ -13997,22 +14004,48 @@ bool Instance::IsInstanceOf(const AbstractType& other,
             const Library& lib = Library::Handle(Library::LookupLibrary(String::Handle(String::New("dart:collection"))));
             const Class& boxclass = Class::Handle(lib.LookupClass(name));
             
-            
-            Instance& boxi = Instance::Handle(Instance::New(boxclass));
-            TypeArguments& element_type = TypeArguments::Handle(TypeArguments::New(1));
-            element_type.SetTypeAt(0, AbstractType::Handle(other_type_arguments.TypeAt(0)));
-            boxi.SetTypeArguments(TypeArguments::Handle(element_type.Canonicalize()));
-            
-            
+            Object *tmpResult;
+            if(String::Handle(cur->Name()).Equals("ListBase")) {
+              Instance& boxi = Instance::Handle(Instance::New(boxclass));
+              TypeArguments& element_type = TypeArguments::Handle(TypeArguments::New(1));
+              element_type.SetTypeAt(0, AbstractType::Handle(other_type_arguments.TypeAt(0)));
+              boxi.SetTypeArguments(TypeArguments::Handle(element_type.Canonicalize()));
+              
+              
 
-            int kNumArguments = 2; // receiver, type-checker
+              int kNumArguments = 2; // receiver, type-checker
+            
+              const Array& args = Array::Handle(Array::New(kNumArguments));
+              args.SetAt(0, *this);
+              args.SetAt(1, boxi);
+              tmpResult = &Object::Handle(DartEntry::InvokeFunction(fun,
+                                                                            args));
+            }
+            else {
+              OS::PrintErr("Invocation of checkmePlease");
+              Instance& boxiK = Instance::Handle(Instance::New(boxclass));
+              TypeArguments& element_typeK = TypeArguments::Handle(TypeArguments::New(1));
+              element_typeK.SetTypeAt(0, AbstractType::Handle(other_type_arguments.TypeAt(0)));
+              boxiK.SetTypeArguments(TypeArguments::Handle(element_typeK.Canonicalize()));
+              
+              Instance& boxiV = Instance::Handle(Instance::New(boxclass));
+              TypeArguments& element_typeV = TypeArguments::Handle(TypeArguments::New(1));
+              element_typeV.SetTypeAt(0, AbstractType::Handle(other_type_arguments.TypeAt(1)));
+              boxiV.SetTypeArguments(TypeArguments::Handle(element_typeV.Canonicalize()));
+              
+              
+              int kNumArguments = 3; // receiver, type-checker
+              
+              const Array& args = Array::Handle(Array::New(kNumArguments));
+              args.SetAt(0, *this);
+              args.SetAt(1, boxiK);
+              args.SetAt(2, boxiV);
+              tmpResult = &Object::Handle(DartEntry::InvokeFunction(fun,
+                                                                              args));
+              
+            }
           
-            const Array& args = Array::Handle(Array::New(kNumArguments));
-            args.SetAt(0, *this);
-            args.SetAt(1, boxi);
-            const Object& result = Object::Handle(DartEntry::InvokeFunction(fun,
-                                                                          args));
-          
+            Object& result = *tmpResult;
             if(result.IsError()) {
               OS::PrintErr("Error during dart function checkMePlease invocation!! : %s\n", String::Handle(Class::Handle(result.clazz()).Name()).ToCString());
 

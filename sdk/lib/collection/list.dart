@@ -7,12 +7,12 @@ part of dart.collection;
 class  TypeBoxx<T> {
   bool isT(x) {
     var response = identical(x, null) || x is T;
-    try {
-      print("Checking if $x : ${x.runtimeType} is $T ${T.runtimeType} : ${response}");
-    }
-    catch(e) {
-      print("Checking if ${x.runtimeType} is $T : ${response}");
-    }
+    // try {
+    //   print("Checking if $x : ${x.runtimeType} is $T ${T.runtimeType} : ${response}");
+    // }
+    // catch(e) {
+    //   print("Checking if ${x.runtimeType} is $T : ${response}");
+    // }
     return response;
   }
 
@@ -47,15 +47,24 @@ abstract class ListBase<E> extends Object with ListMixin<E> {
   static String listToString(List list) =>
       IterableBase.iterableToFullString(list, '[', ']');
 
-
+  static int totalTypeChecks = 0;
+  static int failingTypeChecks = 0;
   void checkMePlease(dynamic z) {
+
     //print("This is ${this.runtimeType}, z is ${z.runtimeType}");
     int i = 0;
+    totalTypeChecks++;
+
+    if(totalTypeChecks %~ 100 == 0) {
+      print("Augmented Type Checker is working ($totalTypeChecks)");
+    }
+
     for(var el in this) {
       i++;
       if(!z.isT(el)) {
+        failingTypeChecks++;
         print("Augmented Type Checker Error");
-        print("Expected unboxed of ${z.runtimeType}, having ${el.runtimeType}");        
+        print("Expected unboxed of ${z.runtimeType}, having ${el.runtimeType},\n failing: ${failingTypeChecks} total: ${totalTypeChecks}");        
       }
     }
   }
