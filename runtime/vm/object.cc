@@ -64,13 +64,15 @@ DEFINE_FLAG(bool, throw_on_javascript_int_overflow, false,
 DEFINE_FLAG(bool, use_field_guards, true, "Guard field cids.");
 DEFINE_FLAG(bool, use_lib_cache, true, "Use library name cache");
 DEFINE_FLAG(bool, trace_field_guards, false, "Trace changes in field's cids.");
-
+DEFINE_FLAG(bool, augment_type_check, false, "Augmented type checker");
+  
 DECLARE_FLAG(bool, trace_compiler);
 DECLARE_FLAG(bool, trace_deoptimization);
 DECLARE_FLAG(bool, trace_deoptimization_verbose);
 DECLARE_FLAG(bool, show_invisible_frames);
 DECLARE_FLAG(charp, coverage_dir);
 DECLARE_FLAG(bool, write_protect_code);
+
 
 static const char* kGetterPrefix = "get:";
 static const intptr_t kGetterPrefixLength = strlen(kGetterPrefix);
@@ -3606,9 +3608,11 @@ bool Class::TypeTestNonRecursive(const Class& cls,
                                  const Class& other,
                                  const TypeArguments& other_type_arguments,
                                  Error* bound_error) {
+
+  Isolate* isolate = Isolate::Current();
+  
   // Use the thsi object as if it was the receiver of this method, but instead
   // of recursing reset it to the super class and loop.
-  Isolate* isolate = Isolate::Current();
   Class& thsi = Class::Handle(isolate, cls.raw());
   while (true) {
     ASSERT(!thsi.IsVoidClass());
@@ -13917,10 +13921,11 @@ void Instance::SetTypeArguments(const TypeArguments& value) const {
   SetFieldAtOffset(field_offset, value);
 }
 
-
+bool augment_disabled = false;
 bool Instance::IsInstanceOf(const AbstractType& other,
                             const TypeArguments& other_instantiator,
                             Error* bound_error) const {
+  
   ASSERT(other.IsFinalized());
   ASSERT(!other.IsDynamicType());
   ASSERT(!other.IsMalformed());
@@ -13962,6 +13967,110 @@ bool Instance::IsInstanceOf(const AbstractType& other,
     other_class = other.type_class();
     other_type_arguments = other.arguments();
   }
+  
+
+  if (FLAG_augment_type_check  && !augment_disabled) {
+    augment_disabled = true;
+    
+//    OS::PrintErr("Start \n");
+    
+    if(!cls.IsDynamicClass() && !cls.IsObjectClass() && !cls.IsFunction() && !other_type_arguments.IsNull()) {
+      
+      Class *cur = &Class::Handle(cls.raw());
+      
+      while(!cur->IsNull()) {
+        
+        if(String::Handle(cur->Name()).Equals("ListBase")) {
+
+
+          RawFunction *it = cur->LookupFunction(String::Handle(String::New("checkMePlease")));
+          Function& fun = Function::Handle(it);
+//          OS::PrintErr("RawFunction : %p   Function %p %i\n", it, &fun, fun.raw() == Function::Handle(Function::null()).raw());
+        
+          if(!fun.IsNull()) {
+
+//            OS::PrintErr("Currentclass : %s function found \n",
+//                       String::Handle(cur->Name()).ToCString());
+            
+            
+            const String& name = String::Handle(String::New("TypeBoxx"));
+            const Library& lib = Library::Handle(Library::LookupLibrary(String::Handle(String::New("dart:collection"))));
+            const Class& boxclass = Class::Handle(lib.LookupClass(name));
+            
+            
+            Instance& boxi = Instance::Handle(Instance::New(boxclass));
+            TypeArguments& element_type = TypeArguments::Handle(TypeArguments::New(1));
+            element_type.SetTypeAt(0, AbstractType::Handle(other_type_arguments.TypeAt(0)));
+            boxi.SetTypeArguments(TypeArguments::Handle(element_type.Canonicalize()));
+            
+            
+
+            int kNumArguments = 2; // receiver, type-checker
+          
+            const Array& args = Array::Handle(Array::New(kNumArguments));
+            args.SetAt(0, *this);
+            args.SetAt(1, boxi);
+            const Object& result = Object::Handle(DartEntry::InvokeFunction(fun,
+                                                                          args));
+          
+            if(result.IsError()) {
+              OS::PrintErr("Error during dart function checkMePlease invocation!! : %s\n", String::Handle(Class::Handle(result.clazz()).Name()).ToCString());
+
+              if (result.IsError()) {
+                Isolate * I = Isolate::Current();
+
+                
+                
+                String& exc_str = String::Handle(I);
+                String& stacktrace_str = String::Handle(I);
+                if (result.IsUnhandledException()) {
+                  const UnhandledException& uhe = UnhandledException::Cast(result);
+                  const Instance& exception = Instance::Handle(I, uhe.exception());
+                  Object& tmp = Object::Handle(I);
+                  tmp = DartLibraryCalls::ToString(exception);
+                  if (!tmp.IsString()) {
+                    tmp = String::New(exception.ToCString());
+                  }
+                  exc_str ^= tmp.raw();
+                  
+                  const Instance& stacktrace = Instance::Handle(I, uhe.stacktrace());
+                  tmp = DartLibraryCalls::ToString(stacktrace);
+                  if (!tmp.IsString()) {
+                    tmp = String::New(stacktrace.ToCString());
+                  }
+                  stacktrace_str ^= tmp.raw();;
+                }
+                
+                OS::PrintErr("Error message:  %s \n stacktrace: %s \n", exc_str.ToCString(), stacktrace_str.ToCString());
+
+                
+              }
+              OS::PrintErr("Element class was %s \n",
+                           String::Handle(AbstractType::Handle(other_type_arguments.TypeAt(0)).Name()).ToCString());
+
+            }
+            else {
+//              OS::PrintErr("Success\n");
+//              OS::PrintErr("Element class was %s \n",
+//                           String::Handle(AbstractType::Handle(other_type_arguments.TypeAt(0)).Name()).ToCString());
+
+            }
+          }
+          
+          break;
+        }
+        cur = &Class::Handle(cur->SuperClass());
+      }
+      
+//      OS::PrintErr("Done! \n");
+      
+    }
+    
+    augment_disabled = false;
+    
+  }
+  
+  
   return cls.IsSubtypeOf(type_arguments, other_class, other_type_arguments,
                          bound_error);
 }

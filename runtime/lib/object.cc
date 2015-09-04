@@ -18,6 +18,7 @@ namespace dart {
 
 DECLARE_FLAG(bool, trace_type_checks);
 DECLARE_FLAG(bool, warn_on_javascript_compatibility);
+DECLARE_FLAG(bool, augment_type_check);
 
 // Helper function in stacktrace.cc.
 void _printCurrentStacktrace();
