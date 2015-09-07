@@ -8,11 +8,14 @@
 #include "vm/lockers.h"
 #include "vm/port.h"
 #include "vm/thread_interrupter.h"
+#include "vm/object.h"
+#include "vm/dart_entry.h"
 
 namespace dart {
 
 DECLARE_FLAG(bool, trace_isolates);
 DECLARE_FLAG(bool, trace_service_pause_events);
+DECLARE_FLAG(bool, augment_type_check);
 
 class MessageHandlerTask : public ThreadPool::Task {
  public:

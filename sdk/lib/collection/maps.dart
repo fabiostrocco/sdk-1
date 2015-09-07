@@ -20,29 +20,7 @@ part of dart.collection;
  * A more efficient implementation is usually possible by overriding
  * some of the other members as well.
  */
-abstract class MapBase<K, V> extends Object with MapMixin<K, V> {
-
-  void checkMePlease(dynamic kT, dynamic vT) {
-    print("Hello");
-    print("This is ${this.runtimeType}, kT is ${kT.runtimeType}");
-    int i = 0;
-    totalTypeChecks++;
-
-    if(totalTypeChecks %~ 100 == 0) {
-      print("Augmented Type Checker is working ($totalTypeChecks)");
-    }
-
-    this.forEach((k, v) {
-      i++;
-      if(!kT.isT(k) || !vT.isT(v)) {
-        failingTypeChecks++;
-        print("Augmented Type Checker Error");
-        print("Expected unboxed of ${kT.runtimeType}, having ${k.runtimeType},\n failing: ${failingTypeChecks} total: ${totalTypeChecks}");        
-        print("Expected unboxed of ${vT.runtimeType}, having ${v.runtimeType},\n failing: ${failingTypeChecks} total: ${totalTypeChecks}");        
-      }
-    });
-  }
-}
+abstract class MapBase<K, V> = Object with MapMixin<K, V>;
 
 
 /**
@@ -102,6 +80,7 @@ abstract class MapMixin<K, V> implements Map<K, V> {
   bool get isNotEmpty => keys.isNotEmpty;
   Iterable<V> get values => new _MapBaseValueIterable<V>(this);
   String toString() => Maps.mapToString(this);
+
 }
 
 /**

@@ -4,6 +4,66 @@
 
 part of dart.collection;
 
+class AugmentedTypeChecker {
+
+  static bool first = true;
+  static int totalTypeChecks = 0;
+  static int failingTypeChecks = 0;
+  
+  static void checkList(dynamic receiver, dynamic z) {
+
+    if(first) {
+      first = false;
+      print("AUTC: Augmented Type Checker is running");
+    }
+    
+    int i = 0;
+    totalTypeChecks++;
+
+    if(totalTypeChecks %~ 100 == 0) {
+      print("AUTC: Augmented Type Checker is working ($totalTypeChecks)");
+    }
+
+    for(var el in receiver) {
+      i++;
+      if(!z.isT(el)) {
+        failingTypeChecks++;
+        print("AUTC: Augmented Type Checker Error");
+        print("AUTC: Expected unboxed of ${z.runtimeType}, having ${el.runtimeType},\n failing: ${failingTypeChecks} total: ${totalTypeChecks}");        
+      }
+    }
+  }
+
+  static void checkMap(dynamic receiver, dynamic kT, dynamic vT) {
+    int i = 0;
+    totalTypeChecks++;
+
+    if(first) {
+      first = false;
+      print("AUTC: Augmented Type Checker is running");
+    }
+
+    if(totalTypeChecks %~ 100 == 0) {
+      print("AUTC: Augmented Type Checker is working ($totalTypeChecks)");
+    }
+
+    receiver.forEach((k, v) {
+      i++;
+      if(!kT.isT(k) || !vT.isT(v)) {
+        failingTypeChecks++;
+        print("AUTC: Augmented Type Checker Error");
+        print("AUTC: Expected unboxed of ${kT.runtimeType}, having ${k.runtimeType},\n failing: ${failingTypeChecks} total: ${totalTypeChecks}");        
+        print("AUTC: Expected unboxed of ${vT.runtimeType}, having ${v.runtimeType},\n failing: ${failingTypeChecks} total: ${totalTypeChecks}");        
+      }
+    });
+  }
+
+  static void onExit() {
+    print("Exit from inside the VM");
+  }
+}
+
+
 class  TypeBoxx<T> {
   bool isT(x) {
     var response = identical(x, null) || x is T;
@@ -47,27 +107,6 @@ abstract class ListBase<E> extends Object with ListMixin<E> {
   static String listToString(List list) =>
       IterableBase.iterableToFullString(list, '[', ']');
 
-  static int totalTypeChecks = 0;
-  static int failingTypeChecks = 0;
-  void checkMePlease(dynamic z) {
-
-    //print("This is ${this.runtimeType}, z is ${z.runtimeType}");
-    int i = 0;
-    totalTypeChecks++;
-
-    if(totalTypeChecks %~ 100 == 0) {
-      print("Augmented Type Checker is working ($totalTypeChecks)");
-    }
-
-    for(var el in this) {
-      i++;
-      if(!z.isT(el)) {
-        failingTypeChecks++;
-        print("Augmented Type Checker Error");
-        print("Expected unboxed of ${z.runtimeType}, having ${el.runtimeType},\n failing: ${failingTypeChecks} total: ${totalTypeChecks}");        
-      }
-    }
-  }
 }
 
 /**

@@ -13973,130 +13973,112 @@ bool Instance::IsInstanceOf(const AbstractType& other,
     other_type_arguments = other.arguments();
   }
   
-
   if (FLAG_augment_type_check  && !augment_disabled) {
     augment_disabled = true;
     
-//    OS::PrintErr("Start \n");
-    
     if(!cls.IsDynamicClass() && !cls.IsObjectClass() && !cls.IsFunction() && !other_type_arguments.IsNull()) {
       
-      Class *cur = &Class::Handle(cls.raw());
-      
-      while(!cur->IsNull()) {
+      const Library& libCore = Library::Handle(Library::LookupLibrary(String::Handle(String::New("dart:core"))));
+      const Library& libCollection = Library::Handle(Library::LookupLibrary(String::Handle(String::New("dart:collection"))));
+      const Class& listClass = Class::Handle(libCore.LookupClass(String::Handle(String::New("List"))));
+      const Class& mapClass = Class::Handle(libCore.LookupClass(String::Handle(String::New("Map"))));
 
-        /*
-          This is not working for maps right now, because MapBase is not the base class for all the maps.
-         */
-        if(String::Handle(cur->Name()).Equals("ListBase") || String::Handle(cur->Name()).Equals("MapBase")) {
+      Error& bound_error = Error::Handle(Error::null());
 
-          RawFunction *it = cur->LookupFunction(String::Handle(String::New("checkMePlease")));
-          Function& fun = Function::Handle(it);
-//          OS::PrintErr("RawFunction : %p   Function %p %i\n", it, &fun, fun.raw() == Function::Handle(Function::null()).raw());
+      bool listInstance = this->IsInstanceOf(AbstractType::Handle(listClass.DeclarationType()), TypeArguments::Handle(AbstractType::Handle(listClass.DeclarationType()).arguments()), &bound_error);
+      bool mapInstance =  this->IsInstanceOf(AbstractType::Handle(mapClass.DeclarationType()), TypeArguments::Handle(AbstractType::Handle(mapClass.DeclarationType()).arguments()), &bound_error);
+
+      if(listInstance || mapInstance) {
+
+        const String& name = String::Handle(String::New("TypeBoxx"));
+        const Class& boxclass = Class::Handle(libCollection.LookupClass(name));
         
-          if(!fun.IsNull()) {
-
-//            OS::PrintErr("Currentclass : %s function found \n",
-//                       String::Handle(cur->Name()).ToCString());
-            
-            
-            const String& name = String::Handle(String::New("TypeBoxx"));
-            const Library& lib = Library::Handle(Library::LookupLibrary(String::Handle(String::New("dart:collection"))));
-            const Class& boxclass = Class::Handle(lib.LookupClass(name));
-            
-            Object *tmpResult;
-            if(String::Handle(cur->Name()).Equals("ListBase")) {
-              Instance& boxi = Instance::Handle(Instance::New(boxclass));
-              TypeArguments& element_type = TypeArguments::Handle(TypeArguments::New(1));
-              element_type.SetTypeAt(0, AbstractType::Handle(other_type_arguments.TypeAt(0)));
-              boxi.SetTypeArguments(TypeArguments::Handle(element_type.Canonicalize()));
-              
-              
-
-              int kNumArguments = 2; // receiver, type-checker
-            
-              const Array& args = Array::Handle(Array::New(kNumArguments));
-              args.SetAt(0, *this);
-              args.SetAt(1, boxi);
-              tmpResult = &Object::Handle(DartEntry::InvokeFunction(fun,
-                                                                            args));
-            }
-            else {
-              OS::PrintErr("Invocation of checkmePlease");
-              Instance& boxiK = Instance::Handle(Instance::New(boxclass));
-              TypeArguments& element_typeK = TypeArguments::Handle(TypeArguments::New(1));
-              element_typeK.SetTypeAt(0, AbstractType::Handle(other_type_arguments.TypeAt(0)));
-              boxiK.SetTypeArguments(TypeArguments::Handle(element_typeK.Canonicalize()));
-              
-              Instance& boxiV = Instance::Handle(Instance::New(boxclass));
-              TypeArguments& element_typeV = TypeArguments::Handle(TypeArguments::New(1));
-              element_typeV.SetTypeAt(0, AbstractType::Handle(other_type_arguments.TypeAt(1)));
-              boxiV.SetTypeArguments(TypeArguments::Handle(element_typeV.Canonicalize()));
-              
-              
-              int kNumArguments = 3; // receiver, type-checker
-              
-              const Array& args = Array::Handle(Array::New(kNumArguments));
-              args.SetAt(0, *this);
-              args.SetAt(1, boxiK);
-              args.SetAt(2, boxiV);
-              tmpResult = &Object::Handle(DartEntry::InvokeFunction(fun,
-                                                                              args));
-              
-            }
+        const String& checkerName = String::Handle(String::New("AugmentedTypeChecker"));
+        const Class& checkerClass = Class::Handle(libCollection.LookupClass(checkerName));
+        
+        Object *tmpResult;
+        if(listInstance) {
+          const Function& checkFunction = Function::Handle(checkerClass.LookupStaticFunction(String::Handle(String::New("checkList"))));
+          Instance& boxi = Instance::Handle(Instance::New(boxclass));
+          TypeArguments& element_type = TypeArguments::Handle(TypeArguments::New(1));
+          element_type.SetTypeAt(0, AbstractType::Handle(other_type_arguments.TypeAt(0)));
+          boxi.SetTypeArguments(TypeArguments::Handle(element_type.Canonicalize()));
+          int kNumArguments = 2; // receiver, type-checker
+        
+          const Array& args = Array::Handle(Array::New(kNumArguments));
+          args.SetAt(0, *this);
+          args.SetAt(1, boxi);
+          tmpResult = &Object::Handle(DartEntry::InvokeFunction(checkFunction, args));
+        }
+        else {
           
-            Object& result = *tmpResult;
-            if(result.IsError()) {
-              OS::PrintErr("Error during dart function checkMePlease invocation!! : %s\n", String::Handle(Class::Handle(result.clazz()).Name()).ToCString());
+          const Function& checkFunction = Function::Handle(checkerClass.LookupStaticFunction(String::Handle(String::New("checkMap"))));
+          
+          Instance& boxiK = Instance::Handle(Instance::New(boxclass));
+          TypeArguments& element_typeK = TypeArguments::Handle(TypeArguments::New(1));
+          element_typeK.SetTypeAt(0, AbstractType::Handle(other_type_arguments.TypeAt(0)));
+          boxiK.SetTypeArguments(TypeArguments::Handle(element_typeK.Canonicalize()));
+          
+          Instance& boxiV = Instance::Handle(Instance::New(boxclass));
+          TypeArguments& element_typeV = TypeArguments::Handle(TypeArguments::New(1));
+          element_typeV.SetTypeAt(0, AbstractType::Handle(other_type_arguments.TypeAt(1)));
+          boxiV.SetTypeArguments(TypeArguments::Handle(element_typeV.Canonicalize()));
+          
+          
+          int kNumArguments = 3; // receiver, type-checker-keys, type-checker-values
+          
+          const Array& args = Array::Handle(Array::New(kNumArguments));
+          args.SetAt(0, *this);
+          args.SetAt(1, boxiK);
+          args.SetAt(2, boxiV);
+          tmpResult = &Object::Handle(DartEntry::InvokeFunction(checkFunction, args));
+          
+        }
+      
+        Object& result = *tmpResult;
+        if(result.IsError()) {
+          OS::PrintErr("Error during dart function checkMePlease invocation!! : %s\n", String::Handle(Class::Handle(result.clazz()).Name()).ToCString());
 
-              if (result.IsError()) {
-                Isolate * I = Isolate::Current();
+          if (result.IsError()) {
+            Isolate * I = Isolate::Current();
 
-                
-                
-                String& exc_str = String::Handle(I);
-                String& stacktrace_str = String::Handle(I);
-                if (result.IsUnhandledException()) {
-                  const UnhandledException& uhe = UnhandledException::Cast(result);
-                  const Instance& exception = Instance::Handle(I, uhe.exception());
-                  Object& tmp = Object::Handle(I);
-                  tmp = DartLibraryCalls::ToString(exception);
-                  if (!tmp.IsString()) {
-                    tmp = String::New(exception.ToCString());
-                  }
-                  exc_str ^= tmp.raw();
-                  
-                  const Instance& stacktrace = Instance::Handle(I, uhe.stacktrace());
-                  tmp = DartLibraryCalls::ToString(stacktrace);
-                  if (!tmp.IsString()) {
-                    tmp = String::New(stacktrace.ToCString());
-                  }
-                  stacktrace_str ^= tmp.raw();;
-                }
-                
-                OS::PrintErr("Error message:  %s \n stacktrace: %s \n", exc_str.ToCString(), stacktrace_str.ToCString());
-
-                
+            
+            
+            String& exc_str = String::Handle(I);
+            String& stacktrace_str = String::Handle(I);
+            if (result.IsUnhandledException()) {
+              const UnhandledException& uhe = UnhandledException::Cast(result);
+              const Instance& exception = Instance::Handle(I, uhe.exception());
+              Object& tmp = Object::Handle(I);
+              tmp = DartLibraryCalls::ToString(exception);
+              if (!tmp.IsString()) {
+                tmp = String::New(exception.ToCString());
               }
-              OS::PrintErr("Element class was %s \n",
-                           String::Handle(AbstractType::Handle(other_type_arguments.TypeAt(0)).Name()).ToCString());
-
+              exc_str ^= tmp.raw();
+              
+              const Instance& stacktrace = Instance::Handle(I, uhe.stacktrace());
+              tmp = DartLibraryCalls::ToString(stacktrace);
+              if (!tmp.IsString()) {
+                tmp = String::New(stacktrace.ToCString());
+              }
+              stacktrace_str ^= tmp.raw();;
             }
-            else {
+            
+            OS::PrintErr("Error message:  %s \n stacktrace: %s \n", exc_str.ToCString(), stacktrace_str.ToCString());
+
+            
+          }
+          OS::PrintErr("Element class was %s \n",
+                       String::Handle(AbstractType::Handle(other_type_arguments.TypeAt(0)).Name()).ToCString());
+
+        }
+        else {
 //              OS::PrintErr("Success\n");
 //              OS::PrintErr("Element class was %s \n",
 //                           String::Handle(AbstractType::Handle(other_type_arguments.TypeAt(0)).Name()).ToCString());
 
-            }
-          }
-          
-          break;
         }
-        cur = &Class::Handle(cur->SuperClass());
       }
-      
-//      OS::PrintErr("Done! \n");
-      
     }
     
     augment_disabled = false;
