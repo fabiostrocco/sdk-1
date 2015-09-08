@@ -13993,7 +13993,6 @@ bool Instance::IsInstanceOf(const AbstractType& other,
       bool setInstance = this->IsInstanceOf(AbstractType::Handle(setClass.DeclarationType()), TypeArguments::Handle(AbstractType::Handle(setClass.DeclarationType()).arguments()), &bound_error);
       bool iterableInstance =  this->IsInstanceOf(AbstractType::Handle(iterableClass.DeclarationType()), TypeArguments::Handle(AbstractType::Handle(iterableClass.DeclarationType()).arguments()), &bound_error);
 
-
       if(listInstance || mapInstance || setInstance || iterableInstance) {
 
         const String& name = String::Handle(String::New("TypeBoxx"));
