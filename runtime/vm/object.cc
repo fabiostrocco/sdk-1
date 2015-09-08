@@ -14069,7 +14069,7 @@ bool Instance::IsInstanceOf(const AbstractType& other,
 
         Object& result = *tmpResult;
         if(result.IsError()) {
-          OS::PrintErr("Error during dart function checkMePlease invocation!! : %s\n", String::Handle(Class::Handle(result.clazz()).Name()).ToCString());
+          OS::PrintErr("AUTC: Error during dart function invocation!! : %s\n", String::Handle(Class::Handle(result.clazz()).Name()).ToCString());
 
           if (result.IsError()) {
             Isolate * I = Isolate::Current();
@@ -14096,11 +14096,11 @@ bool Instance::IsInstanceOf(const AbstractType& other,
               stacktrace_str ^= tmp.raw();;
             }
             
-            OS::PrintErr("Error message:  %s \n stacktrace: %s \n", exc_str.ToCString(), stacktrace_str.ToCString());
+            OS::PrintErr("AUTC: Error message:  %s \n stacktrace: %s \n", exc_str.ToCString(), stacktrace_str.ToCString());
 
             
           }
-          OS::PrintErr("Element class was %s \n",
+          OS::PrintErr("AUTC: Element class was %s \n",
                        String::Handle(AbstractType::Handle(other_type_arguments.TypeAt(0)).Name()).ToCString());
 
         }
