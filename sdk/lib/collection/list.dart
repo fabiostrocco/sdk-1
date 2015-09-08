@@ -34,6 +34,16 @@ class AugmentedTypeChecker {
     }
   }
 
+
+  static void checkSet(dynamic receiver, dynamic z) {
+    checkList(receiver, z);
+  }
+
+
+  static void checkIterable(dynamic receiver, dynamic z) {
+    checkList(receiver, z);
+  }
+
   static void checkMap(dynamic receiver, dynamic kT, dynamic vT) {
     int i = 0;
     totalTypeChecks++;

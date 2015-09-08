@@ -13982,13 +13982,19 @@ bool Instance::IsInstanceOf(const AbstractType& other,
       const Library& libCollection = Library::Handle(Library::LookupLibrary(String::Handle(String::New("dart:collection"))));
       const Class& listClass = Class::Handle(libCore.LookupClass(String::Handle(String::New("List"))));
       const Class& mapClass = Class::Handle(libCore.LookupClass(String::Handle(String::New("Map"))));
+      const Class& iterableClass = Class::Handle(libCore.LookupClass(String::Handle(String::New("Iterable"))));
+      const Class& setClass = Class::Handle(libCore.LookupClass(String::Handle(String::New("Set"))));
+
 
       Error& bound_error = Error::Handle(Error::null());
 
       bool listInstance = this->IsInstanceOf(AbstractType::Handle(listClass.DeclarationType()), TypeArguments::Handle(AbstractType::Handle(listClass.DeclarationType()).arguments()), &bound_error);
       bool mapInstance =  this->IsInstanceOf(AbstractType::Handle(mapClass.DeclarationType()), TypeArguments::Handle(AbstractType::Handle(mapClass.DeclarationType()).arguments()), &bound_error);
+      bool setInstance = this->IsInstanceOf(AbstractType::Handle(setClass.DeclarationType()), TypeArguments::Handle(AbstractType::Handle(setClass.DeclarationType()).arguments()), &bound_error);
+      bool iterableInstance =  this->IsInstanceOf(AbstractType::Handle(iterableClass.DeclarationType()), TypeArguments::Handle(AbstractType::Handle(iterableClass.DeclarationType()).arguments()), &bound_error);
 
-      if(listInstance || mapInstance) {
+
+      if(listInstance || mapInstance || setInstance || iterableInstance) {
 
         const String& name = String::Handle(String::New("TypeBoxx"));
         const Class& boxclass = Class::Handle(libCollection.LookupClass(name));
@@ -13996,7 +14002,7 @@ bool Instance::IsInstanceOf(const AbstractType& other,
         const String& checkerName = String::Handle(String::New("AugmentedTypeChecker"));
         const Class& checkerClass = Class::Handle(libCollection.LookupClass(checkerName));
         
-        Object *tmpResult;
+        Object *tmpResult = NULL;
         if(listInstance) {
           const Function& checkFunction = Function::Handle(checkerClass.LookupStaticFunction(String::Handle(String::New("checkList"))));
           Instance& boxi = Instance::Handle(Instance::New(boxclass));
@@ -14010,7 +14016,7 @@ bool Instance::IsInstanceOf(const AbstractType& other,
           args.SetAt(1, boxi);
           tmpResult = &Object::Handle(DartEntry::InvokeFunction(checkFunction, args));
         }
-        else {
+        else if(mapInstance) {
           
           const Function& checkFunction = Function::Handle(checkerClass.LookupStaticFunction(String::Handle(String::New("checkMap"))));
           
@@ -14034,7 +14040,33 @@ bool Instance::IsInstanceOf(const AbstractType& other,
           tmpResult = &Object::Handle(DartEntry::InvokeFunction(checkFunction, args));
           
         }
-      
+        else if(setInstance) {
+          const Function& checkFunction = Function::Handle(checkerClass.LookupStaticFunction(String::Handle(String::New("checkSet"))));
+          Instance& boxi = Instance::Handle(Instance::New(boxclass));
+          TypeArguments& element_type = TypeArguments::Handle(TypeArguments::New(1));
+          element_type.SetTypeAt(0, AbstractType::Handle(other_type_arguments.TypeAt(0)));
+          boxi.SetTypeArguments(TypeArguments::Handle(element_type.Canonicalize()));
+          int kNumArguments = 2; // receiver, type-checker
+        
+          const Array& args = Array::Handle(Array::New(kNumArguments));
+          args.SetAt(0, *this);
+          args.SetAt(1, boxi);
+          tmpResult = &Object::Handle(DartEntry::InvokeFunction(checkFunction, args));
+        }
+        else if(iterableInstance) {
+          const Function& checkFunction = Function::Handle(checkerClass.LookupStaticFunction(String::Handle(String::New("checkIterable"))));
+          Instance& boxi = Instance::Handle(Instance::New(boxclass));
+          TypeArguments& element_type = TypeArguments::Handle(TypeArguments::New(1));
+          element_type.SetTypeAt(0, AbstractType::Handle(other_type_arguments.TypeAt(0)));
+          boxi.SetTypeArguments(TypeArguments::Handle(element_type.Canonicalize()));
+          int kNumArguments = 2; // receiver, type-checker
+        
+          const Array& args = Array::Handle(Array::New(kNumArguments));
+          args.SetAt(0, *this);
+          args.SetAt(1, boxi);
+          tmpResult = &Object::Handle(DartEntry::InvokeFunction(checkFunction, args));
+        }
+
         Object& result = *tmpResult;
         if(result.IsError()) {
           OS::PrintErr("Error during dart function checkMePlease invocation!! : %s\n", String::Handle(Class::Handle(result.clazz()).Name()).ToCString());
