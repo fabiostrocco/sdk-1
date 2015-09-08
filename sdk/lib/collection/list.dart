@@ -20,7 +20,7 @@ class AugmentedTypeChecker {
     int i = 0;
     totalTypeChecks++;
 
-    if(totalTypeChecks %~ 100 == 0) {
+    if(totalTypeChecks %~ 10 == 0) {
       print("AUTC: Augmented Type Checker is working ($totalTypeChecks)");
     }
 
@@ -53,7 +53,7 @@ class AugmentedTypeChecker {
       print("AUTC: Augmented Type Checker is running");
     }
 
-    if(totalTypeChecks %~ 100 == 0) {
+    if(totalTypeChecks %~ 10 == 0) {
       print("AUTC: Augmented Type Checker is working ($totalTypeChecks)");
     }
 
