@@ -65,6 +65,9 @@ class Object {
 // Patch for Function implementation.
 @patch
 class Function {
+  @patch
+  static dynamic receiver(Function function) => null;
+
   @patch_old
   static apply(Function function,
                List positionalArguments,
