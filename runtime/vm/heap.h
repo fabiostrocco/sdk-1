@@ -42,6 +42,7 @@ class Heap {
   enum WeakSelector {
     kPeers = 0,
     kHashes,
+    kCustomTags,
     kNumWeakSelectors
   };
 
