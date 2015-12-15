@@ -209,7 +209,10 @@ abstract class Enqueuer {
     List<String> loc = new List();
     Element cur = e;
     while(cur is! LibraryElement) {
-      if(cur is CompilationUnitElement) {
+      if(cur is CompilationUnitElement && (cur.library.isPlatformLibrary || cur.library.isPatch)) {
+        loc.insert(0,cur.library.canonicalUri.toString());
+      }
+      else if(cur is CompilationUnitElement) {
         loc.insert(0, cur.library.libraryName);
       }
       else {
