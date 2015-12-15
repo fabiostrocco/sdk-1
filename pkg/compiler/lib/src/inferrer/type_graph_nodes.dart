@@ -922,6 +922,7 @@ class DynamicCallSiteTypeInformation extends CallSiteTypeInformation {
     // and a call to `delegate`), we iterate over all these methods to
     // update their parameter types.
     targets = compiler.world.allFunctions.filter(selector, maskToUse);
+
     Iterable<Element> typedTargets = canReachAll
         ? compiler.world.allFunctions.filter(selector, typeMask)
         : targets;
@@ -948,6 +949,7 @@ class DynamicCallSiteTypeInformation extends CallSiteTypeInformation {
           this, element, arguments, selector, typeMask, remove: true,
           addToQueue: true);
     });
+
 
     // Walk over the found targets, and compute the joined union type mask
     // for all these targets.

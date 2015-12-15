@@ -4,10 +4,11 @@
 
 library dart2js.compiler_base;
 
+import "dart:convert";
 import 'dart:async' show
     EventSink,
     Future;
-
+import "dart:io";
 import '../compiler_new.dart' as api;
 import 'cache_strategy.dart' show
     CacheStrategy;
@@ -144,6 +145,11 @@ import 'util/util.dart' show
     Setlet;
 import 'world.dart' show
     World;
+
+
+
+bool OUTPUT_INTERNAL_ELEMENTS_LIST = false;
+
 
 abstract class Compiler {
 
@@ -990,7 +996,7 @@ abstract class Compiler {
         supportDumpInfo: dumpInfo);
 
     phase = PHASE_RESOLVING;
-    if (analyzeAll) {
+    if (analyzeAll || OUTPUT_INTERNAL_ELEMENTS_LIST) {
       libraryLoader.libraries.forEach((LibraryElement library) {
       reporter.log('Enqueuing ${library.canonicalUri}');
         fullyEnqueueLibrary(library, enqueuer.resolution);
@@ -1023,6 +1029,48 @@ abstract class Compiler {
       }
     }
 
+    if(OUTPUT_INTERNAL_ELEMENTS_LIST) {
+      List<LibraryElement> platformLibraries = new List();
+      List<ClassElement> platformClasses = new List();
+
+      // populate list of internal classes
+      libraryLoader.libraries.forEach((LibraryElement l) {
+        if (backend.isBackendLibrary(l) || l.isPlatformLibrary || l.isPatch) {
+          print(l);
+          platformLibraries.add(l);
+          l.forEachLocalMember((Element e) {
+            if (e is ClassElement) {
+              platformClasses.add(e);
+            }
+          });
+        }
+      });
+
+      File libfile = new File("libraries.json");
+      File clsfile = new File("classes.json");
+
+      List<Map> out = new List();
+      platformLibraries.forEach((LibraryElement lib) {
+        out.add(
+        {
+          "uri": lib.canonicalUri.toString()
+        }
+        );
+      });
+      libfile.writeAsStringSync(JSON.encode(out));
+      out.clear();
+
+      platformClasses.forEach((ClassElement e) {
+        out.add({
+          "liburi": e.library.canonicalUri.toString(),
+          "className" : e.name
+        });
+      });
+      clsfile.writeAsStringSync(JSON.encode(out));
+
+    }
+
+
     if (analyzeOnly) {
       if (!analyzeAll && !compilationFailed) {
         // No point in reporting unused code when [analyzeAll] is true: all
@@ -1036,6 +1084,9 @@ abstract class Compiler {
       return;
     }
     assert(mainFunction != null);
+
+
+
     phase = PHASE_DONE_RESOLVING;
 
     world.populate();

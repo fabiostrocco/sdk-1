@@ -4,6 +4,8 @@
 
 library dart2js.enqueue;
 
+import 'dart:convert';
+import 'dart:io';
 import 'dart:collection' show
     Queue;
 
@@ -30,6 +32,7 @@ import 'dart_types.dart' show
     InterfaceType;
 import 'elements/elements.dart' show
     AnalyzableElement,
+    CompilationUnitElement,
     AstElement,
     ClassElement,
     ConstructorElement,
@@ -96,6 +99,22 @@ class EnqueueTask extends CompilerTask {
   }
 }
 
+class Blacklist {
+
+  Set<String> prunedClasses;
+  Set<String> prunedFunctions;
+
+  Blacklist._internal(this.prunedClasses, this.prunedFunctions);
+
+  factory Blacklist.json(Map m) {
+    return new Blacklist._internal(
+        (m["prunedClasses"] as List).toSet(),
+        (m["prunedFunctions"] as List).toSet()
+    );
+  }
+
+}
+
 abstract class Enqueuer {
   final String name;
   final Compiler compiler; // TODO(ahe): Remove this dependency.
@@ -119,6 +138,8 @@ abstract class Enqueuer {
   bool hasEnqueuedReflectiveElements = false;
   bool hasEnqueuedReflectiveStaticFields = false;
 
+  Blacklist blacklist;
+
   WorldImpactVisitor impactVisitor;
 
   Enqueuer(this.name,
@@ -126,6 +147,16 @@ abstract class Enqueuer {
            this.itemCompilationContextCreator,
            this.strategy) {
     impactVisitor = new _EnqueuerImpactVisitor(this);
+
+    try {
+      File blacklistFile = new File("output/unreachable-pre.json");
+      print("Searching blacklist in ${blacklistFile.absolute.path}");
+      blacklist = new Blacklist.json(JSON.decode(blacklistFile.readAsStringSync()));
+      print("Possibly pruned classes: ${blacklist.prunedClasses.length}, Possibly pruned functions: ${blacklist.prunedFunctions.length}");
+      print("All elements \n${blacklist.prunedClasses} \n or ${blacklist.prunedFunctions}");
+    }
+    catch(e) {}
+
   }
 
   // TODO(johnniwinther): Move this to [ResolutionEnqueuer].
@@ -157,12 +188,36 @@ abstract class Enqueuer {
    */
   void addToWorkList(Element element) {
     assert(invariant(element, element.isDeclaration));
+    if(blacklist != null) {
+      String elementName = getLocation(element).join("#");
+      print("Searching $elementName");
+      if(blacklist.prunedClasses.contains(elementName) || blacklist.prunedFunctions.contains(elementName)) {
+        print("Pruned $element ($elementName)");
+        return;
+      }
+    }
     if (internalAddToWorkList(element) && compiler.dumpInfo) {
       // TODO(sigmund): add other missing dependencies (internals, selectors
       // enqueued after allocations), also enable only for the codegen enqueuer.
       compiler.dumpInfoTask.registerDependency(
           compiler.currentElement, element);
     }
+  }
+
+
+  List<String> getLocation(Element e) {
+    List<String> loc = new List();
+    Element cur = e;
+    while(cur is! LibraryElement) {
+      if(cur is CompilationUnitElement) {
+        loc.insert(0, cur.library.libraryName);
+      }
+      else {
+        loc.insert(0,cur.name);
+      }
+      cur = cur.enclosingElement;
+    }
+    return loc;
   }
 
   /**
