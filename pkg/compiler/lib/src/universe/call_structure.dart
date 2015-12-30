@@ -81,6 +81,7 @@ class CallStructure {
   }
 
   bool signatureApplies(FunctionSignature parameters) {
+    throw new Exception();
     if (argumentCount > parameters.parameterCount) return false;
     int requiredParameterCount = parameters.requiredParameterCount;
     int optionalParameterCount = parameters.optionalParameterCount;

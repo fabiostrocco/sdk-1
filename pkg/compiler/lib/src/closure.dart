@@ -1152,6 +1152,8 @@ class TypeVariableLocal implements Local {
     if (other is! TypeVariableLocal) return false;
     return typeVariable == other.typeVariable;
   }
+
+  String toString() => "$typeVariable in $executableContext";
 }
 
 ///

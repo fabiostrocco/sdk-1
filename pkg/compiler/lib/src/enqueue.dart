@@ -153,7 +153,7 @@ abstract class Enqueuer {
       print("Searching blacklist in ${blacklistFile.absolute.path}");
       blacklist = new Blacklist.json(JSON.decode(blacklistFile.readAsStringSync()));
       print("Possibly pruned classes: ${blacklist.prunedClasses.length}, Possibly pruned functions: ${blacklist.prunedFunctions.length}");
-      print("All elements \n${blacklist.prunedClasses} \n or ${blacklist.prunedFunctions}");
+      print("All elements -\n- Classes:\n${blacklist.prunedClasses.join("\n")} \n- Functions:\n${blacklist.prunedFunctions.join("\n")}");
     }
     catch(e) {}
 
@@ -187,13 +187,16 @@ abstract class Enqueuer {
    * Invariant: [element] must be a declaration element.
    */
   void addToWorkList(Element element) {
+    if(element is ClassElement) throw new Exception("Class element $element");
     assert(invariant(element, element.isDeclaration));
     if(blacklist != null) {
       String elementName = getLocation(element).join("#");
-      print("Searching $elementName");
-      if(blacklist.prunedClasses.contains(elementName) || blacklist.prunedFunctions.contains(elementName)) {
-        print("Pruned $element ($elementName)");
+      if(blacklist.prunedFunctions.contains(elementName)) {
+        print("- Pruned function $element ($elementName)");
         return;
+      }
+      else {
+        print("- Non blacklisted function $elementName");
       }
     }
     if (internalAddToWorkList(element) && compiler.dumpInfo) {
@@ -238,6 +241,7 @@ abstract class Enqueuer {
 
   void registerInstantiatedType(InterfaceType type,
                                 {bool mirrorUsage: false}) {
+
     task.measure(() {
       ClassElement cls = type.element;
       cls.ensureResolved(resolution);
@@ -252,7 +256,16 @@ abstract class Enqueuer {
       });
       // TODO(johnniwinther): Share this reasoning with [Universe].
       if (!cls.isAbstract || isNative || mirrorUsage) {
-        processInstantiatedClass(cls);
+        if(blacklist != null) {
+          String elementName = getLocation(type.element).join("#");
+          if (blacklist.prunedClasses.contains(elementName)) {
+            print("- Pruned class ${type.element} ($elementName)");
+          }
+          else {
+            print("- Non blacklisted class $elementName");
+            processInstantiatedClass(cls);
+          }
+        }
       }
     });
   }
