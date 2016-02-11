@@ -83,6 +83,12 @@ DEFINE_FLAG(charp, gc_at_instance_allocation, NULL,
             "the specified class");
 #endif
 
+
+DEFINE_RUNTIME_ENTRY(ObserveTypes, 0) {
+  
+}
+
+
 DEFINE_RUNTIME_ENTRY(TraceFunctionEntry, 1) {
   const Function& function = Function::CheckedHandle(arguments.ArgAt(0));
   const String& function_name = String::Handle(function.name());

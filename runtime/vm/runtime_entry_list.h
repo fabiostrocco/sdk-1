@@ -36,6 +36,7 @@ namespace dart {
   V(ReThrow)                                                                   \
   V(StackOverflow)                                                             \
   V(Throw)                                                                     \
+  V(ObserveTypes)                                                              \
   V(TraceFunctionEntry)                                                        \
   V(TraceFunctionExit)                                                         \
   V(DeoptimizeMaterialize)                                                     \

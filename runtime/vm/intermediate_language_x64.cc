@@ -230,7 +230,14 @@ void StoreLocalInstr::EmitNativeCode(FlowGraphCompiler* compiler) {
   Register value = locs()->in(0).reg();
   Register result = locs()->out(0).reg();
   ASSERT(result == value);  // Assert that register assignment is correct.
+  
   __ movq(Address(RBP, local().index() * kWordSize), value);
+
+  __ pushq(result);
+  
+  compiler->GenerateRuntimeCall(token_pos(), Thread::kNoDeoptId, kObserveTypesRuntimeEntry, 0, locs());
+
+  __ popq(result);
 }
 
 
