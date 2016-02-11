@@ -23,6 +23,12 @@
 
 namespace dart {
 
+/* Macros to instrument the vm so that types are observed */
+#define INSTRUMENT_NO_DEOPT(init, finalize) \
+  init \
+  compiler->GenerateRuntimeCall(token_pos(), Thread::kNoDeoptId, kObserveTypesRuntimeEntry, 0, locs()); \
+  finalize
+
 DECLARE_FLAG(bool, allow_absolute_addresses);
 DECLARE_FLAG(bool, emit_edge_counters);
 DECLARE_FLAG(int, optimization_counter_threshold);
@@ -225,7 +231,6 @@ LocationSummary* StoreLocalInstr::MakeLocationSummary(Zone* zone,
                                LocationSummary::kNoCall);
 }
 
-
 void StoreLocalInstr::EmitNativeCode(FlowGraphCompiler* compiler) {
   Register value = locs()->in(0).reg();
   Register result = locs()->out(0).reg();
@@ -233,11 +238,44 @@ void StoreLocalInstr::EmitNativeCode(FlowGraphCompiler* compiler) {
   
   __ movq(Address(RBP, local().index() * kWordSize), value);
 
-  __ pushq(result);
-  
-  compiler->GenerateRuntimeCall(token_pos(), Thread::kNoDeoptId, kObserveTypesRuntimeEntry, 0, locs());
+  printf("LOCS %d \n", (int) token_pos());
+  Script& cur = Script::Handle(compiler->parsed_function().function().script());
+  intptr_t* line = new intptr_t();
+  intptr_t* column = new intptr_t();
+  intptr_t* token_len = new intptr_t();
+  if(local().owner() == NULL) {
+     printf("OWNER IS NULL\n");
+     return;
+  }
+  cur.GetTokenLocation(local().token_pos()/*token_pos()*/, line, column, token_len);
 
-  __ popq(result);
+  LocalScope* scope = local().owner();
+  int parents = 0;
+  printf("Parents -> ");
+  while(scope != NULL) {
+    intptr_t* line = new intptr_t();
+    intptr_t* column = new intptr_t();
+    intptr_t* token_len = new intptr_t();
+    cur.GetTokenLocation(scope->begin_token_pos(), line, column, token_len);
+    printf("SC(%d:%d) ", (int) *line, (int) *column);
+    parents++;
+    scope = scope->parent();
+  }
+
+  scope = local().owner();
+  int children = 0;
+  while(scope != NULL) {
+    children++;
+    scope = scope->child();
+  }
+
+  printf("\n LOCS (line %d) (column %d) (length %d) - url %s - name %s - parents: %d - children: %d \n", (int) *line, (int) *column, (int) *token_len,
+  String::Handle(cur.url()).ToCString(), local().name().ToCString(), parents, children);
+  /*RawString* s = String::New("Hellooooooooooooooo");
+  __ movq(result, Address(s));*/
+  INSTRUMENT_NO_DEOPT(
+    __ pushq(result);,
+    __ popq(result);)
 }
 
 

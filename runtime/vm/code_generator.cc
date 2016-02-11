@@ -85,7 +85,7 @@ DEFINE_FLAG(charp, gc_at_instance_allocation, NULL,
 
 
 DEFINE_RUNTIME_ENTRY(ObserveTypes, 0) {
-  
+  printf("Observe types here \n");
 }
 
 
