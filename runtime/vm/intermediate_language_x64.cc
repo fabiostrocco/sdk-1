@@ -224,26 +224,14 @@ LocationSummary* StoreLocalInstr::MakeLocationSummary(Zone* zone,
 }
 
 void StoreLocalInstr::EmitNativeCode(FlowGraphCompiler* compiler) {
-/*
-    __ Bind(&stepping);
-    __ EnterStubFrame();
-    __ pushq(RBX);
-    __ CallRuntime(kSingleStepHandlerRuntimeEntry, 0);
-    __ popq(RBX);
-    __ LeaveStubFrame();
-    __ jmp(&done_stepping);
-*/
-
   Register value = locs()->in(0).reg();
   Register result = locs()->out(0).reg();
   ASSERT(result == value);  // Assert that register assignment is correct.
   __ movq(Address(RBP, local().index() * kWordSize), value);
     ISL_Print("This is a store local inst\n");
-    //__ pushq(reg);  // Push the source object.
+   __ pushq(result);  // Push the source object.
   compiler->GenerateRuntimeCall(token_pos(), Isolate::kNoDeoptId, kObserveTypesRuntimeEntry, 0, locs());
-  //__ popq(result);
-  __ Drop(1);
-
+  __ popq(result);
 }
 
 

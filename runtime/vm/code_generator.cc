@@ -477,7 +477,7 @@ DEFINE_RUNTIME_ENTRY(Instanceof, 5) {
 // Observes the types of runtime values
 // TODO(fstrocco): write a stub here
 DEFINE_RUNTIME_ENTRY(ObserveTypes, 0) {
-
+  printf("i_made_it_without_seg_fault\n");
 }
 
 
