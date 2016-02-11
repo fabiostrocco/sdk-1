@@ -17,6 +17,8 @@
 #include "vm/stack_frame.h"
 #include "vm/stub_code.h"
 #include "vm/symbols.h"
+/* TODO(fstrocco): remove log when the implementation will be stable */
+#include "vm/log.h"
 
 #define __ compiler->assembler()->
 
@@ -93,7 +95,7 @@ void ReturnInstr::EmitNativeCode(FlowGraphCompiler* compiler) {
   __ Comment("Stack Check");
   Label done;
   const intptr_t fp_sp_dist =
-      (kFirstLocalSlotFromFp + 1 - compiler->StackSize()) * kWordSize;
+         (kFirstLocalSlotFromFp + 1 - compiler->StackSize()) * kWordSize;
   ASSERT(fp_sp_dist <= 0);
   __ movq(RDI, RSP);
   __ subq(RDI, RBP);
@@ -141,9 +143,11 @@ LocationSummary* IfThenElseInstr::MakeLocationSummary(Zone* zone,
   return comparison()->locs();
 }
 
-
 void IfThenElseInstr::EmitNativeCode(FlowGraphCompiler* compiler) {
   ASSERT(locs()->out(0).reg() == RDX);
+  ISL_Print("This is an ifThenElse\n");
+  /*__ PushObject(Object::null_object(), PP);
+    compiler->GenerateRuntimeCall(token_pos(), deopt_id(), kObserveTypesRuntimeEntry, 0, locs());*/
 
   // Clear upper part of the out register. We are going to use setcc on it
   // which is a byte move.
@@ -219,12 +223,27 @@ LocationSummary* StoreLocalInstr::MakeLocationSummary(Zone* zone,
                                LocationSummary::kNoCall);
 }
 
-
 void StoreLocalInstr::EmitNativeCode(FlowGraphCompiler* compiler) {
+/*
+    __ Bind(&stepping);
+    __ EnterStubFrame();
+    __ pushq(RBX);
+    __ CallRuntime(kSingleStepHandlerRuntimeEntry, 0);
+    __ popq(RBX);
+    __ LeaveStubFrame();
+    __ jmp(&done_stepping);
+*/
+
   Register value = locs()->in(0).reg();
   Register result = locs()->out(0).reg();
   ASSERT(result == value);  // Assert that register assignment is correct.
   __ movq(Address(RBP, local().index() * kWordSize), value);
+    ISL_Print("This is a store local inst\n");
+    //__ pushq(reg);  // Push the source object.
+  compiler->GenerateRuntimeCall(token_pos(), Isolate::kNoDeoptId, kObserveTypesRuntimeEntry, 0, locs());
+  //__ popq(result);
+  __ Drop(1);
+
 }
 
 

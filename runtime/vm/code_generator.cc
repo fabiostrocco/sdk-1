@@ -474,6 +474,12 @@ DEFINE_RUNTIME_ENTRY(Instanceof, 5) {
   arguments.SetReturn(result);
 }
 
+// Observes the types of runtime values
+// TODO(fstrocco): write a stub here
+DEFINE_RUNTIME_ENTRY(ObserveTypes, 0) {
+
+}
+
 
 // Check that the type of the given instance is a subtype of the given type and
 // can therefore be assigned.

@@ -50,6 +50,7 @@ DECLARE_RUNTIME_ENTRY(DeoptimizeMaterialize);
 DECLARE_RUNTIME_ENTRY(UpdateFieldCid);
 DECLARE_RUNTIME_ENTRY(InitStaticField);
 DECLARE_RUNTIME_ENTRY(GrowRegExpStack);
+    DECLARE_RUNTIME_ENTRY(ObserveTypes);
 
 const char* DeoptReasonToCString(ICData::DeoptReasonId deopt_reason);
 

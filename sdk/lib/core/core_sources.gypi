@@ -39,5 +39,6 @@
     'symbol.dart',
     'type.dart',
     'uri.dart',
+    'instrument.dart'
   ],
 }
