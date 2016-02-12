@@ -26,7 +26,7 @@ namespace dart {
 /* Macros to instrument the vm so that types are observed */
 #define INSTRUMENT_NO_DEOPT(init, finalize) \
   init \
-  compiler->GenerateRuntimeCall(token_pos(), Thread::kNoDeoptId, kObserveTypesRuntimeEntry, 0, locs()); \
+  compiler->GenerateRuntimeCall(token_pos(), Thread::kNoDeoptId, kObserveTypesRuntimeEntry, 3, locs()); \
   finalize
 
 DECLARE_FLAG(bool, allow_absolute_addresses);
@@ -238,7 +238,7 @@ void StoreLocalInstr::EmitNativeCode(FlowGraphCompiler* compiler) {
   
   __ movq(Address(RBP, local().index() * kWordSize), value);
 
-  printf("LOCS %d \n", (int) token_pos());
+  printf("LOCS %d \n", (int) local().token_pos());
   Script& cur = Script::Handle(compiler->parsed_function().function().script());
   intptr_t* line = new intptr_t();
   intptr_t* column = new intptr_t();
@@ -271,10 +271,27 @@ void StoreLocalInstr::EmitNativeCode(FlowGraphCompiler* compiler) {
 
   printf("\n LOCS (line %d) (column %d) (length %d) - url %s - name %s - parents: %d - children: %d \n", (int) *line, (int) *column, (int) *token_len,
   String::Handle(cur.url()).ToCString(), local().name().ToCString(), parents, children);
-  /*RawString* s = String::New("Hellooooooooooooooo");
-  __ movq(result, Address(s));*/
+  //String& st = String::Handle(Symbols::New("Helloww"));
+
+  String& st = String::ZoneHandle(String::New("Hello", Heap::kOld));
+
+  /*RawString* s = String::New("Hellooooooooooooooo");*/
+
+  /*
+  __ movq(result, Address(THR, Thread::predefined_symbols_address_offset()));
+  __ movq(result, Address(result,
+                          char_code,
+                          TIMES_HALF_WORD_SIZE,  // Char code is a smi.
+                          Symbols::kNullCharCodeSymbolOffset * kWordSize));
+  */
+    // __ PushObject(st);
+
   INSTRUMENT_NO_DEOPT(
-    __ pushq(result);,
+    __ pushq(result);
+    __ PushObject(st);
+    __ pushq(value);
+    __ PushObject(local().type());,
+    __ Drop(3);
     __ popq(result);)
 }
 

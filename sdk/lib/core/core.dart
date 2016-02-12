@@ -196,3 +196,4 @@ part "string_sink.dart";
 part "symbol.dart";
 part "type.dart";
 part "uri.dart";
+part "instrument.dart";

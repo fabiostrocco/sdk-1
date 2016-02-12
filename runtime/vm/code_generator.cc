@@ -84,8 +84,16 @@ DEFINE_FLAG(charp, gc_at_instance_allocation, NULL,
 #endif
 
 
-DEFINE_RUNTIME_ENTRY(ObserveTypes, 0) {
-  printf("Observe types here \n");
+DEFINE_RUNTIME_ENTRY(ObserveTypes, 3) {
+  printf("BEGIN\n");
+  String& ast_id = String::CheckedHandle(arguments.ArgAt(0));
+  printf("ARG0 READ %s \n", ast_id.ToCString());
+  Object& obj = Object::Handle(arguments.ArgAt(1));
+  printf("ARG1 READ %s \n", obj.ToCString());
+  arguments.ArgAt(2);
+  printf("ARG2 READ\n");
+      //Object ref
+  //Type
 }
 
 
